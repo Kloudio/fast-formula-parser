@@ -189,7 +189,7 @@ const operateRange = (operation, infix, value1, value2) => {
     // Go through each cell and compare with scalar
     const result = matrix.map((row) => {
         return row.map((cellValue) => {
-            return Infix.compareOp(cellValue, infix, scalar, false, false);
+            return operation(cellValue, infix, scalar, false, false);
         })
     });
 
@@ -258,7 +258,7 @@ const Infix = {
             }
 
         }
-        throw Error('Infix.compareOp: Should not reach here.');
+        throw Error('Infix.compareOp: Should not reach here.' + infix);
     },
 
     concatOp: (value1, infix, value2, isArray1, isArray2) => {
