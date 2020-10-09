@@ -67,6 +67,63 @@ const Infix = {
             value2 = value2[0][0];
         }
 
+        const isArrayType1 = value1 instanceof Array;
+        const isArrayType2 = value2 instanceof Array;
+        if (isArrayType1 || isArrayType2) {
+            // At least one of these is a range
+            if (isArrayType1 && isArrayType2) {
+                // Both are ranges
+
+                // Check and normalize dimensions
+                const width1 = value1[0].length;
+                const width2 = value2[0].length;
+                const height1 = value1.length;
+                const height2 = value2.length;
+
+                if (width1 !== width2 || height1 !== height2) {
+                    // Different size matrices, need to pad to make them the same size
+
+                    const widthDiff = Math.abs(width1 - width2);
+                    if (widthDiff > 0) {
+                        const matrixToPadWidth = width1 < width2 ? value1 : value2;
+                        matrixToPadWidth.forEach((row, index) => {
+                            row = row.concat(Array(row.length - widthDiff).fill(NaN));
+                            matrixToPadWidth[index] = row;
+                        });
+                    }
+
+                    const heightDiff = Math.abs(height1 - height2);
+                    if (heightDiff > 0) {
+                        const matrixToPadHeight = height1 < height2 ? value1 : value2;
+                        matrixToPadHeight = matrixToPadHeight.concat(Array(row.length - heightDiff).fill(NaN));
+                    }
+                }
+                
+                // Go through each cell and save comparison
+                const result = value1.map((row, i) => {
+                    return row.map((cellValue1 , j) => {
+                        const cellValue2 = value2[i][j];
+                        return Infix.compareOp(cellValue1, infix, cellValue2, false, false);
+                    })
+                });
+
+                return result;
+            }
+
+            const matrix = isArrayType1 ? value1 : value2;
+            const scalar = isArrayType1 ? value2 : value1;
+
+            // Else value1 or value2 is a scalar
+            // Go through each cell and compare with scalar
+            const result = matrix.map((row) => {
+                return row.map((cellValue) => {
+                    return Infix.compareOp(cellValue, infix, scalar, false, false);
+                })
+            });
+
+            return result;
+        }
+
         const type1 = typeof value1, type2 = typeof value2;
 
         if (type1 === type2) {
