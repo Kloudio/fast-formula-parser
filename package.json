@@ -1,6 +1,6 @@
 {
   "name": "@kloudio/fast-formula-parser",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "fast excel formula parser",
   "repository": "https://github.com/Kloudio/fast-formula-parser",
   "main": "index.js",
