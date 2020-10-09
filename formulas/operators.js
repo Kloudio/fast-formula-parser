@@ -198,8 +198,8 @@ const operateRange = (operation, infix, value1, value2) => {
 
 const Infix = {
     compareOp: (value1, infix, value2, isArray1, isArray2) => {
-        if (value1 == null) value1 = 0;
-        if (value2 == null) value2 = 0;
+        if (value1 == null || value1 === void 0) value1 = 0;
+        if (value2 == null || value2 === void 0) value2 = 0;
 
         if (value1 instanceof FormulaError || value2 instanceof FormulaError) {
             return value1 instanceof FormulaError ? value1 : value2;
@@ -282,8 +282,8 @@ const Infix = {
     },
 
     mathOp: (value1, infix, value2, isArray1, isArray2) => {
-        if (value1 == null) value1 = 0;
-        if (value2 == null) value2 = 0;
+        if (value1 == null || value1 === void 0) value1 = 0;
+        if (value2 == null || value2 === void 0) value2 = 0;
 
         if (value1 instanceof FormulaError || value2 instanceof FormulaError) {
             return value1 instanceof FormulaError ? value1 : value2;
