@@ -55,10 +55,156 @@ const Postfix = {
 
 const type2Number = {'boolean': 3, 'string': 2, 'number': 1};
 
+const createNotAvailableError = () => {
+    return new FormulaError("#N/A", "A value is not available to the formula or function.");
+}
+
+const operateRange = (operation, infix, value1, value2) => {
+    const isArrayType1 = value1 instanceof Array;
+    const isArrayType2 = value2 instanceof Array;
+    if (isArrayType1 && isArrayType2) {
+        // Both are ranges
+
+        // Check and normalize dimensions
+        const width1 = value1[0].length;
+        const width2 = value2[0].length;
+        const height1 = value1.length;
+        const height2 = value2.length;
+
+        // Default values
+        let matrix1 = value1;
+        let matrix2 = value2;
+
+        if (width1 !== width2 || height1 !== height2) {
+            // Different size matrices, need to pad to make them the same size
+
+            /**
+             * If one of the matrices is a row vector of the same width or column
+             * vector of the same height as the other matrix, then we want to run
+             * the math operation on each row/column of the other matrix, respectively
+             * 
+             * E.g. [[3,3,3],[4,4,4]] * [[1],[0]] = [[3,3,3],[0,0,0]]
+             */
+            if (width1 === 1 || width2 === 1) {
+                if (width1 !== width2) {
+                    if (height1 === height2) {
+                        // One of the matrices is a col vector
+                        const vector = width1 === 1 ? value1 : value2;
+                        const matrix = width1 === 1 ? value2 : value1;
+                        
+                        // Create a new matrix that's padded with the vector
+                        const width = matrix[0].length;
+                        const newMatrix = vector.map((row) => {
+                            const cellValue = row[0];
+
+                            return Array(width).fill(cellValue);
+                        });
+
+                        if (width1 === 1) {
+                            // value1 was originally the vector
+                            matrix1 = newMatrix;
+                            matrix2 = value2;
+                        }
+                        else {
+                            // value2 was originally the vector
+                            matrix1 = value1;
+                            matrix2 = newMatrix;
+                        }
+                    }
+                }
+            }
+            else if (height1 === 1 || height2 === 1) {
+                if (height1 !== height2) {
+                    if (width1 === width2) {
+                        // One of the matrices is a col vector
+                        const vector = height1 === 1 ? value1 : value2;
+                        const matrix = height1 === 1 ? value2 : value1;
+                        
+                        // Create a new matrix that's padded with the vector
+                        const height = matrix.length;
+                        const row = vector[0];
+                        const newMatrix = vector.concat(Array(height-vector.length).fill(row));
+
+                        if (height1 === 1) {
+                            // value1 was originally the vector
+                            matrix1 = newMatrix;
+                            matrix2 = value2;
+                        }
+                        else {
+                            // value2 was originally the vector
+                            matrix1 = value1;
+                            matrix2 = newMatrix;
+                        }
+                    }
+                }
+            }
+
+            const newWidth1 = matrix1[0].length;
+            const newWidth2 = matrix2[0].length;
+            const targetWidth = Math.max(newWidth1, newWidth2);
+            const newHeight1 = matrix1.length;
+            const newHeight2 = matrix2.length;
+            const targetHeight = Math.max(newHeight1, newHeight2);
+
+            // Pad the matrices to normalize the dimensions
+            const widthDiff = Math.abs(newWidth1 - newWidth2);
+            if (widthDiff > 0) {
+                let matrixToPadWidth = newWidth1 < newWidth2 ? matrix1 : matrix2;
+                matrixToPadWidth.forEach((row, index) => {
+                    row = row.concat(Array(widthDiff).fill(createNotAvailableError()));
+                    matrixToPadWidth[index] = row;
+                });
+            }
+
+            const heightDiff = Math.abs(newHeight1 - newHeight2);
+            if (heightDiff > 0) {
+                let matrixToPadHeight = newHeight1 < newHeight2 ? matrix1 : matrix2;
+                matrixToPadHeight = matrixToPadHeight.concat(Array(heightDiff).fill(Array(targetWidth).fill(createNotAvailableError())));
+                if (newHeight1 < newHeight2) {
+                    matrix1 = matrixToPadHeight;
+                }
+                else {
+                    matrix2 = matrixToPadHeight
+                }
+            }
+        }
+
+        
+        // Go through each cell and save comparison
+        const result = matrix1.map((row, i) => {
+            return row.map((cellValue1 , j) => {
+                const cellValue2 = matrix2[i][j];
+
+                return operation(cellValue1, infix, cellValue2, false, false);
+            })
+        });
+
+        return result;
+    }
+
+    const matrix = isArrayType1 ? value1 : value2;
+    const scalar = isArrayType1 ? value2 : value1;
+
+    // Else value1 or value2 is a scalar
+    // Go through each cell and compare with scalar
+    const result = matrix.map((row) => {
+        return row.map((cellValue) => {
+            return Infix.compareOp(cellValue, infix, scalar, false, false);
+        })
+    });
+
+    return result;
+}
+
 const Infix = {
     compareOp: (value1, infix, value2, isArray1, isArray2) => {
         if (value1 == null) value1 = 0;
         if (value2 == null) value2 = 0;
+
+        if (value1 instanceof FormulaError || value2 instanceof FormulaError) {
+            return value1 instanceof FormulaError ? value1 : value2;
+        }
+
         // for array: {1,2,3}, get the first element to compare
         if (isArray1) {
             value1 = value1[0][0];
@@ -67,61 +213,14 @@ const Infix = {
             value2 = value2[0][0];
         }
 
+        if (value1 instanceof FormulaError || value2 instanceof FormulaError) {
+            return value1 instanceof FormulaError ? value1 : value2;
+        }
+
         const isArrayType1 = value1 instanceof Array;
         const isArrayType2 = value2 instanceof Array;
         if (isArrayType1 || isArrayType2) {
-            // At least one of these is a range
-            if (isArrayType1 && isArrayType2) {
-                // Both are ranges
-
-                // Check and normalize dimensions
-                const width1 = value1[0].length;
-                const width2 = value2[0].length;
-                const height1 = value1.length;
-                const height2 = value2.length;
-
-                if (width1 !== width2 || height1 !== height2) {
-                    // Different size matrices, need to pad to make them the same size
-
-                    const widthDiff = Math.abs(width1 - width2);
-                    if (widthDiff > 0) {
-                        const matrixToPadWidth = width1 < width2 ? value1 : value2;
-                        matrixToPadWidth.forEach((row, index) => {
-                            row = row.concat(Array(row.length - widthDiff).fill(NaN));
-                            matrixToPadWidth[index] = row;
-                        });
-                    }
-
-                    const heightDiff = Math.abs(height1 - height2);
-                    if (heightDiff > 0) {
-                        const matrixToPadHeight = height1 < height2 ? value1 : value2;
-                        matrixToPadHeight = matrixToPadHeight.concat(Array(row.length - heightDiff).fill(NaN));
-                    }
-                }
-                
-                // Go through each cell and save comparison
-                const result = value1.map((row, i) => {
-                    return row.map((cellValue1 , j) => {
-                        const cellValue2 = value2[i][j];
-                        return Infix.compareOp(cellValue1, infix, cellValue2, false, false);
-                    })
-                });
-
-                return result;
-            }
-
-            const matrix = isArrayType1 ? value1 : value2;
-            const scalar = isArrayType1 ? value2 : value1;
-
-            // Else value1 or value2 is a scalar
-            // Go through each cell and compare with scalar
-            const result = matrix.map((row) => {
-                return row.map((cellValue) => {
-                    return Infix.compareOp(cellValue, infix, scalar, false, false);
-                })
-            });
-
-            return result;
+            return operateRange(Infix.compareOp, infix, value1, value2);
         }
 
         const type1 = typeof value1, type2 = typeof value2;
@@ -185,6 +284,16 @@ const Infix = {
     mathOp: (value1, infix, value2, isArray1, isArray2) => {
         if (value1 == null) value1 = 0;
         if (value2 == null) value2 = 0;
+
+        if (value1 instanceof FormulaError || value2 instanceof FormulaError) {
+            return value1 instanceof FormulaError ? value1 : value2;
+        }
+
+        const isArrayType1 = value1 instanceof Array;
+        const isArrayType2 = value2 instanceof Array;
+        if (isArrayType1 || isArrayType2) {
+            return operateRange(Infix.mathOp, infix, value1, value2);
+        }
 
         try {
             value1 = FormulaHelpers.acceptNumber(value1, isArray1);
