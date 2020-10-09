@@ -1,6 +1,6 @@
 {
   "name": "@kloudioinc/fast-formula-parser",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "fast excel formula parser",
   "repository": {
     "type": "git",
