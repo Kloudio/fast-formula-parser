@@ -1,12 +1,12 @@
 {
   "name": "@kloudio/fast-formula-parser",
-  "version": "1.0.19",
+  "version": "1.0.1",
   "description": "fast excel formula parser",
-  "repository": "https://github.com/Kloudio/fast-formula-parser",
-  "main": "index.js",
-  "publishConfig": {
-    "access": "restricted"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LesterLyu/fast-formula-parser.git"
   },
+  "main": "index.js",
   "scripts": {
     "test": "mocha -s 0",
     "test:f": "mocha test/formulas",
@@ -29,8 +29,8 @@
     "parser",
     "excel-formula"
   ],
-  "author": "Lester(Dishu) Lyu",
-  "license": "MIT",
+  "author": "Kloudio",
+  "license": "UNLICENSED",
   "dependencies": {
     "bahttext": "^1.1.0",
     "bessel": "^1.0.2",
@@ -48,5 +48,13 @@
     "webpack": "^4.44.0",
     "webpack-bundle-analyzer": "^3.8.0",
     "webpack-cli": "^3.3.12"
+  },
+  "bugs": {
+    "url": "https://github.com/Kloudio/fast-formula-parser/issues"
+  },
+  "homepage": "https://github.com/Kloudio/fast-formula-parser#readme",
+  "directories": {
+    "example": "examples",
+    "test": "test"
   }
 }
