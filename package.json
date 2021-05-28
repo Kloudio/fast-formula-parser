@@ -1,6 +1,6 @@
 {
   "name": "@kloudioinc/fast-formula-parser",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "fast excel formula parser",
   "repository": {
     "type": "git",
@@ -11,7 +11,6 @@
     "test": "mocha -s 0",
     "test:f": "mocha test/formulas",
     "prepublishOnly": "yarn run build && yarn run test",
-    "postpublish": "yarn run publish:docs",
     "build": "webpack",
     "diagram": "node grammar/diagram.js",
     "docs": "yarn run diagram && jsdoc --configure .jsdoc.json --verbose",
