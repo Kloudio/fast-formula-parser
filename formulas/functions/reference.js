@@ -1,7 +1,6 @@
 const FormulaError = require('../error');
 const {FormulaHelpers, Types, WildCard, Address} = require('../helpers');
 const Collection = require('../../grammar/type/collection');
-const { merge } = require('lodash');
 const H = FormulaHelpers;
 
 const ReferenceFunctions = {
@@ -229,28 +228,14 @@ const ReferenceFunctions = {
                 range = range.ref;
                 if (range.to.row - range.from.row < rowNum - 1 || range.to.col - range.from.col < colNum - 1)
                     throw FormulaError.REF;
-                const {
-                    row,
-                    col,
-                    from,
-                    to,
-                    ...rest
-                } = range;
-                return {ref: {row: range.from.row + rowNum - 1, col: range.from.col + colNum - 1, ...rest}};
+                return {ref: {row: range.from.row + rowNum - 1, col: range.from.col + colNum - 1}};
             }
             // cell reference
             else if (H.isCellRef(range)) {
                 range = range.ref;
                 if (rowNum > 1 || colNum > 1)
                     throw FormulaError.REF;
-                const {
-                    row,
-                    col,
-                    from,
-                    to,
-                    ...rest
-                } = range;
-                return {ref: {row: range.row + rowNum - 1, col: range.col + colNum - 1, ...rest}};
+                return {ref: {row: range.row + rowNum - 1, col: range.col + colNum - 1}};
             }
             // array constant
             else if (Array.isArray(range)) {
